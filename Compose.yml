@@ -2,14 +2,14 @@ version: "3.9"
 
 services:
   backend:
-    build: ./backend
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
     container_name: student-backend
     ports:
       - "5005:5000"
     restart: always
 
   frontend:
-    build: ./frontend
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
     container_name: student-frontend
     ports:
       - "3000:80"
