@@ -1,5 +1,3 @@
-options:
-  logging: CLOUD_LOGGING_ONLY
 
 steps:
   # Build backend
@@ -18,27 +16,4 @@ steps:
       - asia-south1-docker.pkg.dev/meanrevcontact/meanrevrepo/frontend:$SHORT_SHA
       - ./frontend
 
-  # Deploy to private VM via IAP
-  - name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
-    args:
-      - -c
-      - |
-        echo " Deploying to VM via IAP..."
-        gcloud compute ssh meanrev-app-server \
-          --zone asia-south1-b \
-          --tunnel-through-iap \
-          --command "
-            cd /var/www/app &&
-            echo '⬇ Pulling new images...' &&
-            docker compose pull &&
-            echo ' Restarting services...' &&
-            docker compose up -d &&
-            echo ' Deployment completed'
-          "
 
-images:
-  - asia-south1-docker.pkg.dev/meanrevcontact/meanrevrepo/backend:$SHORT_SHA
-  - asia-south1-docker.pkg.dev/meanrevcontact/meanrevrepo/frontend:$SHORT_SHA
-
-timeout: "1800s"
