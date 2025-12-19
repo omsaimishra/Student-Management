@@ -1,19 +1,44 @@
-
 steps:
   # Build backend
-  - name: "gcr.io/cloud-builders/docker"
+  - name: 'gcr.io/cloud-builders/docker'
     args:
       - build
       - -t
-      - asia-south1-docker.pkg.dev/meanrevcontact/meanrevrepo/backend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
       - ./backend
 
   # Build frontend
-  - name: "gcr.io/cloud-builders/docker"
+  - name: 'gcr.io/cloud-builders/docker'
     args:
       - build
       - -t
-      - asia-south1-docker.pkg.dev/meanrevcontact/meanrevrepo/frontend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
       - ./frontend
 
+  # Deploy to private VM via IAP SSH
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "🚀 Deploying tag: $SHORT_SHA"
+        gcloud compute ssh student-vm-private-1 \
+          --project student-management-demoapp \
+          --zone asia-south1-a \
+          --tunnel-through-iap \
+          --quiet \
+          --command "
+            cd ~/app &&
+            export TAG=$SHORT_SHA &&
+            docker compose pull &&
+            docker compose up -d
+          "
 
+images:
+  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
+  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: "1800s"
