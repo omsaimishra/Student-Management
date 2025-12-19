@@ -28,7 +28,7 @@ steps:
           --tunnel-through-iap \
           --quiet \
           --command "
-            cd ~/app &&
+            cd /home/om/app &&
             export TAG=$SHORT_SHA &&
             docker compose pull &&
             docker compose up -d
