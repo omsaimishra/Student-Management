@@ -1,6 +1,6 @@
 steps:
   # Build backend
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
@@ -8,31 +8,51 @@ steps:
       - ./backend
 
   # Build frontend
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
       - ./frontend
 
-  # Deploy to private VM via IAP SSH
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Deploy to private VM
+  - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
     args:
       - -c
       - |
-        echo "🚀 Deploying tag: $SHORT_SHA"
-        gcloud compute ssh student-vm-private-1 \
-          --project student-management-demoapp \
-          --zone asia-south1-a \
-          --tunnel-through-iap \
-          --quiet \
-          --command "
-            cd /home/om/app &&
-            export TAG=$SHORT_SHA &&
-            docker compose pull &&
-            docker compose up -d
-          "
+          echo "Preparing deployment for tag: $SHORT_SHA"
+
+          echo "Creating application directory on VM..."
+          gcloud compute ssh student-vm-private-1 \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet \
+            --command "mkdir -p /home/om/app"
+
+          echo "Copying docker-compose.yml to VM..."
+          gcloud compute scp docker-compose.yml \
+            om@student-vm-private-1:/home/om/app/docker-compose.yml \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet
+
+          echo "Deploying application..."
+          gcloud compute ssh student-vm-private-1 \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet \
+            --command "
+              cd /home/om/app &&
+              export TAG=$SHORT_SHA &&
+              gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
+              docker compose pull &&
+              docker compose down &&
+              docker compose up -d
+            "
 
 images:
   - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
