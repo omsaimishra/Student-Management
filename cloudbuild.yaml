@@ -49,9 +49,9 @@ steps:
               cd /home/om/app &&
               export TAG=$SHORT_SHA &&
               gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
-              docker compose pull &&
-              docker compose down &&
-              docker compose up -d
+              TAG=$SHORT_SHA docker compose pull &&
+              TAG=$SHORT_SHA docker compose down &&
+              TAG=$SHORT_SHA docker compose up -d
             "
 
 images:
