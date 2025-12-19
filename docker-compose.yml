@@ -1,15 +1,13 @@
-version: "3.9"
-
 services:
   backend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:${Tag}
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:${TAG}
     container_name: student-backend
     ports:
       - "5005:5000"
     restart: always
 
   frontend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:${Tag}
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:${TAG}
     container_name: student-frontend
     ports:
       - "3000:80"
