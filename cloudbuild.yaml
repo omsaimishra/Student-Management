@@ -7,6 +7,11 @@ steps:
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
       - ./backend
 
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
+
   # Build frontend
   - name: gcr.io/cloud-builders/docker
     args:
@@ -15,15 +20,17 @@ steps:
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
       - ./frontend
 
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
+
   # Deploy to private VM
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
     args:
       - -c
       - |
-          echo "Preparing deployment for tag: $SHORT_SHA"
-
-          echo "Creating application directory on VM..."
           gcloud compute ssh student-vm-private-1 \
             --project student-management-demoapp \
             --zone asia-south1-a \
@@ -31,7 +38,6 @@ steps:
             --quiet \
             --command "mkdir -p /home/om/app"
 
-          echo "Copying docker-compose.yml to VM..."
           gcloud compute scp docker-compose.yml \
             om@student-vm-private-1:/home/om/app/docker-compose.yml \
             --project student-management-demoapp \
@@ -39,7 +45,6 @@ steps:
             --tunnel-through-iap \
             --quiet
 
-          echo "Deploying application..."
           gcloud compute ssh student-vm-private-1 \
             --project student-management-demoapp \
             --zone asia-south1-a \
@@ -49,9 +54,9 @@ steps:
               cd /home/om/app &&
               gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
               TAG=$SHORT_SHA docker compose pull &&
-              TAG=$SHORT_SHA docker compose down &&
               TAG=$SHORT_SHA docker compose up -d
             "
+
 
 images:
   - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
