@@ -1,56 +1,70 @@
 import { useState } from "react";
 import "./App.css";
-const API = "http://localhost:5005/api/students";
+
+/**
+ * 🔴 IMPORTANT
+ * Replace this with your actual Load Balancer IP
+ */
+const API_BASE = "http://34.14.208.222/api/students";
+
 export default function App() {
   const [name, setName] = useState("");
   const [roll, setRoll] = useState("");
   const [searchRoll, setSearchRoll] = useState("");
   const [students, setStudents] = useState([]);
 
- const addStudent = async () => {
-  if (!name || !roll) {
-    alert("Enter name and roll number");
-    return;
-  }
+  // ➕ Add Student
+  const addStudent = async () => {
+    if (!name || !roll) {
+      alert("Enter name and roll number");
+      return;
+    }
 
-  const res = await fetch(API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, roll }),
-  });
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        rollNumber: roll, // MUST match backend
+      }),
+    });
 
-  const data = await res.json();
+    if (!res.ok) {
+      const err = await res.text();
+      alert(err);
+      return;
+    }
 
-  if (!res.ok) {
-    alert(data.message);
-    return;
-  }
+    alert("Student added successfully");
+    setName("");
+    setRoll("");
+  };
 
-  alert("Student added successfully");
-  setName("");
-  setRoll("");
-};
+  // 🔍 Search Student by Roll
+  const searchStudent = async () => {
+    if (!searchRoll) return;
 
-const searchStudent = async () => {
-  if (!searchRoll) return;
+    const res = await fetch(`${API_BASE}/${searchRoll}`);
+    const data = await res.json();
 
-  const res = await fetch(`${API}/${searchRoll}`);
-  const data = await res.json();
+    if (!res.ok || data.length === 0) {
+      alert("Student not found");
+      return;
+    }
 
-  if (!res.ok) {
-    alert(data.message);
-    return;
-  }
+    alert(
+      `Name: ${data[0].name}\nRoll: ${data[0].roll_number}`
+    );
+  };
 
-  alert(`Name: ${data.name}, Roll: ${data.roll}`);
-};
-const fetchStudents = async () => {
-  const res = await fetch(API);
-  const data = await res.json();
-  setStudents(data);
-};
+  // 📥 Fetch All Students
+  const fetchStudents = async () => {
+    const res = await fetch(API_BASE);
+    const data = await res.json();
+    setStudents(data);
+  };
 
   return (
     <div className="page">
@@ -58,7 +72,7 @@ const fetchStudents = async () => {
       <p className="subtitle">Demo Application</p>
 
       <div className="grid">
-        {/* Add Student */}
+        {/* ➕ Add Student */}
         <div className="card">
           <h2>➕ Add Student</h2>
 
@@ -79,7 +93,7 @@ const fetchStudents = async () => {
           <button onClick={addStudent}>Add Student</button>
         </div>
 
-        {/* Search Student */}
+        {/* 🔍 Search Student */}
         <div className="card">
           <h2>🔍 Search Student</h2>
 
@@ -87,30 +101,27 @@ const fetchStudents = async () => {
           <input
             value={searchRoll}
             onChange={(e) => setSearchRoll(e.target.value)}
-            placeholder="Enter roll number to search"
+            placeholder="Enter roll number"
           />
 
           <button onClick={searchStudent}>Search</button>
         </div>
       </div>
 
-      {/* All Students */}
+      {/* 👥 All Students */}
       <div className="card full">
         <div className="header">
           <h2>👥 All Students</h2>
-         <button onClick={fetchStudents}>Fetch Students</button>
-
+          <button onClick={fetchStudents}>Fetch Students</button>
         </div>
 
         {students.length === 0 ? (
-          <p className="muted">
-            Click "Fetch Students" to load the list
-          </p>
+          <p className="muted">Click "Fetch Students" to load the list</p>
         ) : (
           <ul className="list">
-            {students.map((s, i) => (
-              <li key={i}>
-                <strong>{s.name}</strong> — Roll: {s.roll}
+            {students.map((s) => (
+              <li key={s.id}>
+                <strong>{s.name}</strong> — Roll: {s.roll_number}
               </li>
             ))}
           </ul>
