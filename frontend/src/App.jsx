@@ -5,7 +5,7 @@ import "./App.css";
  * 🔴 IMPORTANT
  * Replace this with your actual Load Balancer IP
  */
-const API_BASE = "http://34.14.208.222/api/students";
+const API_BASE = "/api/students";
 
 export default function App() {
   const [name, setName] = useState("");
@@ -27,7 +27,7 @@ export default function App() {
       },
       body: JSON.stringify({
         name,
-        rollNumber: roll, // MUST match backend
+        roll: roll, // MUST match backend
       }),
     });
 
