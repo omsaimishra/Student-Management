@@ -11,7 +11,15 @@ app.use(express.json());
  * TEMP IN-MEMORY DATA
  * (Will replace with MySQL tomorrow)
  */
-let students = [];
+const mysql = require("mysql2/promise");
+
+const db = mysql.createPool({
+  host: "localhost",        // or mysql container name if using docker-compose
+  user: "student",
+  password: "studentpass",
+  database: "studentdb"
+});
+
 
 /**
  * Health Check
@@ -23,44 +31,55 @@ app.get("/", (req, res) => {
 /**
  * Add Student
  */
-app.post("/api/students", (req, res) => {
+app.post("/api/students", async (req, res) => {
   const { name, roll } = req.body;
 
   if (!name || !roll) {
     return res.status(400).json({ message: "Name and Roll required" });
   }
 
-  const exists = students.find((s) => s.roll === roll);
-  if (exists) {
-    return res.status(409).json({ message: "Roll number already exists" });
+  try {
+    const [exists] = await db.query(
+      "SELECT * FROM students WHERE roll_number = ?",
+      [roll]
+    );
+
+    if (exists.length > 0) {
+      return res.status(409).json({ message: "Roll number already exists" });
+    }
+
+    await db.query(
+      "INSERT INTO students (name, roll_number) VALUES (?, ?)",
+      [name, roll]
+    );
+
+    res.status(201).json({ name, roll });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Database error" });
   }
-
-  const student = { name, roll };
-  students.push(student);
-
-  res.status(201).json(student);
 });
 
 /**
  * Get All Students
  */
-app.get("/api/students", (req, res) => {
-  res.json(students);
+app.get("/api/students", async (req, res) => {
+  const [rows] = await db.query("SELECT * FROM students");
+  res.json(rows);
 });
 
 /**
  * Search Student by Roll
  */
-app.get("/api/students/:roll", (req, res) => {
-  const student = students.find((s) => s.roll === req.params.roll);
+app.get("/api/students/:roll", async (req, res) => {
+  const [rows] = await db.query(
+    "SELECT * FROM students WHERE roll_number = ?",
+    [req.params.roll]
+  );
 
-  if (!student) {
+  if (rows.length === 0) {
     return res.status(404).json({ message: "Student not found" });
   }
 
-  res.json(student);
-});
-
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+  res.json(rows[0]);
 });
