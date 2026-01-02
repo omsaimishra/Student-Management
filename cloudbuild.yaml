@@ -50,3 +50,6 @@ steps:
 images:
   - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:prod
   - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:prod
+options:
+  logging: CLOUD_LOGGING_ONLY
+
