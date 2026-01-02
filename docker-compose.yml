@@ -1,16 +1,26 @@
+version: "3.8"
+
 services:
   backend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:${TAG}
-    container_name: student-backend
-    ports:
-      - "5005:5000"
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:dev
     restart: always
+    ports:
+      - "5000:5000"
 
   frontend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:${TAG}
-    container_name: student-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:dev
     restart: always
+    ports:
+      - "80:80"
+
+  mysql:
+    image: mysql:8
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: studentdb
+
+volumes:
+  mysql-data:
