@@ -83,3 +83,6 @@ app.get("/api/students/:roll", async (req, res) => {
 
   res.json(rows[0]);
 });
+app.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
+});

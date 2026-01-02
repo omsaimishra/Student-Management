@@ -43,21 +43,20 @@ export default function App() {
   };
 
   // 🔍 Search Student by Roll
-  const searchStudent = async () => {
-    if (!searchRoll) return;
+const searchStudent = async () => {
+  if (!searchRoll) return;
 
-    const res = await fetch(`${API_BASE}/${searchRoll}`);
-    const data = await res.json();
+  const res = await fetch(`${API_BASE}/${searchRoll}`);
+  const data = await res.json();
 
-    if (!res.ok || data.length === 0) {
-      alert("Student not found");
-      return;
-    }
+  if (!res.ok) {
+    alert("Student not found");
+    return;
+  }
 
-    alert(
-      `Name: ${data[0].name}\nRoll: ${data[0].roll_number}`
-    );
-  };
+  alert(`Name: ${data.name}\nRoll: ${data.roll_number}`);
+};
+
 
   // 📥 Fetch All Students
   const fetchStudents = async () => {
