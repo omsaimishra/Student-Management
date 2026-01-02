@@ -31,23 +31,32 @@ steps:
     args:
       - '-c'
       - |
-        # Use common SSH arguments to avoid repetition and hanging
-        export SSH_ARGS="--zone=asia-south1-a --tunnel-through-iap --quiet --project=student-management-demoapp"
+        # 1. Create directory
+        gcloud compute ssh student-vm-private-1 \
+          --zone=asia-south1-a \
+          --tunnel-through-iap \
+          --project=student-management-demoapp \
+          --quiet \
+          --command="mkdir -p /home/om/app"
 
-        echo "Creating directory..."
-        gcloud compute ssh student-vm-private-1 $SSH_ARGS --command="mkdir -p /home/om/app"
+        # 2. Upload docker-compose
+        gcloud compute scp docker-compose.yml om@student-vm-private-1:/home/om/app/docker-compose.yml \
+          --zone=asia-south1-a \
+          --tunnel-through-iap \
+          --project=student-management-demoapp \
+          --quiet
 
-        echo "Uploading docker-compose..."
-        gcloud compute scp docker-compose.yml om@student-vm-private-1:/home/om/app/docker-compose.yml $SSH_ARGS
-
-        echo "Deploying containers..."
-        gcloud compute ssh student-vm-private-1 $SSH_ARGS --command="
-          sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
-          cd /home/om/app &&
-          export TAG=$SHORT_SHA &&
-          sudo docker compose pull &&
-          sudo docker compose up -d
-        "
+        # 3. Pull and Deploy
+        gcloud compute ssh student-vm-private-1 \
+          --zone=asia-south1-a \
+          --tunnel-through-iap \
+          --project=student-management-demoapp \
+          --quiet \
+          --command="sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
+                     cd /home/om/app && \
+                     export TAG=$SHORT_SHA && \
+                     sudo docker compose pull && \
+                     sudo docker compose up -d"
 
 
 images:
