@@ -26,36 +26,28 @@ steps:
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
 
   # Deploy to private VM
-  - name: gcr.io/cloud-builders/gcloud
+  - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: bash
     args:
-      - -c
+      - '-c'
       - |
-          gcloud compute ssh student-vm-private-1 \
-            --project student-management-demoapp \
-            --zone asia-south1-a \
-            --tunnel-through-iap \
-            --quiet \
-            --command "mkdir -p /home/om/app"
+        # Use common SSH arguments to avoid repetition and hanging
+        export SSH_ARGS="--zone=asia-south1-a --tunnel-through-iap --quiet --project=student-management-demoapp"
 
-          gcloud compute scp docker-compose.yml \
-            om@student-vm-private-1:/home/om/app/docker-compose.yml \
-            --project student-management-demoapp \
-            --zone asia-south1-a \
-            --tunnel-through-iap \
-            --quiet
+        echo "Creating directory..."
+        gcloud compute ssh student-vm-private-1 $SSH_ARGS --command="mkdir -p /home/om/app"
 
-          gcloud compute ssh student-vm-private-1 \
-            --project student-management-demoapp \
-            --zone asia-south1-a \
-            --tunnel-through-iap \
-            --quiet \
-            --command "
-              cd /home/om/app &&
-              gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
-              TAG=$SHORT_SHA docker compose pull &&
-              TAG=$SHORT_SHA docker compose up -d
-            "
+        echo "Uploading docker-compose..."
+        gcloud compute scp docker-compose.yml om@student-vm-private-1:/home/om/app/docker-compose.yml $SSH_ARGS
+
+        echo "Deploying containers..."
+        gcloud compute ssh student-vm-private-1 $SSH_ARGS --command="
+          sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
+          cd /home/om/app &&
+          export TAG=$SHORT_SHA &&
+          sudo docker compose pull &&
+          sudo docker compose up -d
+        "
 
 
 images:
