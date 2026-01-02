@@ -9,19 +9,8 @@ steps:
 
   - name: gcr.io/cloud-builders/docker
     args:
-      - tag
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:prod
-
-  - name: gcr.io/cloud-builders/docker
-    args:
       - push
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
-
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:prod
 
   # Build frontend
   - name: gcr.io/cloud-builders/docker
@@ -33,23 +22,47 @@ steps:
 
   - name: gcr.io/cloud-builders/docker
     args:
-      - tag
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:prod
-
-  - name: gcr.io/cloud-builders/docker
-    args:
       - push
       - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
 
-  - name: gcr.io/cloud-builders/docker
+  # Deploy to private VM
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
     args:
-      - push
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:prod
+      - -c
+      - |
+          gcloud compute ssh student-vm-private-1 \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet \
+            --command "mkdir -p /home/om/app"
+
+          gcloud compute scp docker-compose.yml \
+            om@student-vm-private-1:/home/om/app/docker-compose.yml \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet
+
+          gcloud compute ssh student-vm-private-1 \
+            --project student-management-demoapp \
+            --zone asia-south1-a \
+            --tunnel-through-iap \
+            --quiet \
+            --command "
+              cd /home/om/app &&
+              gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet &&
+              TAG=$SHORT_SHA docker compose pull &&
+              TAG=$SHORT_SHA docker compose up -d
+            "
+
 
 images:
-  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:prod
-  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:prod
+  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
+  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
+timeout: "1800s"
