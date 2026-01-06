@@ -1,69 +1,65 @@
 steps:
-  # Build backend
-  - name: gcr.io/cloud-builders/docker
+  # 1. Build & Push Backend (Runs in parallel)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-backend'
     args:
-      - build
-      - -t
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
-      - ./backend
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA'
+      - '--cache-from'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest'
+      - './backend'
 
-  - name: gcr.io/cloud-builders/docker
+  # 2. Build & Push Frontend (Runs in parallel)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
     args:
-      - push
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA'
+      - '--cache-from'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest'
+      - './frontend'
 
-  # Build frontend
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - build
-      - -t
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
-      - ./frontend
+  # 3. Push images in parallel
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    waitFor: ['build-backend']
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA']
 
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA']
 
-  # Deploy to private VM
+  # 4. Deployment (Wait for both pushes to finish)
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy'
+    waitFor: ['push-backend', 'push-frontend']
     entrypoint: bash
     args:
       - '-c'
       - |
-        # 1. Create directory
-        gcloud compute ssh student-vm-private-1 \
-          --zone=asia-south1-a \
-          --tunnel-through-iap \
-          --project=student-management-demoapp \
-          --quiet \
-          --command="mkdir -p /home/om/app"
-
-        # 2. Upload docker-compose
+        # Consolidate SCP and SSH into minimum connections
         gcloud compute scp docker-compose.yml om@student-vm-private-1:/home/om/app/docker-compose.yml \
-          --zone=asia-south1-a \
-          --tunnel-through-iap \
-          --project=student-management-demoapp \
-          --quiet
+          --zone=asia-south1-a --tunnel-through-iap --quiet
 
-        # 3. Pull and Deploy
         gcloud compute ssh student-vm-private-1 \
-          --zone=asia-south1-a \
-          --tunnel-through-iap \
-          --project=student-management-demoapp \
-          --quiet \
-          --command="sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
+          --zone=asia-south1-a --tunnel-through-iap --quiet \
+          --command="mkdir -p /home/om/app && \
+                     sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
                      cd /home/om/app && \
                      export TAG=$SHORT_SHA && \
                      sudo docker compose pull && \
                      sudo docker compose up -d"
 
-
 images:
-  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:$SHORT_SHA
-  - asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:$SHORT_SHA
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  # This allows steps with no 'waitFor' to run immediately in parallel
+  requestedVerifyOption: VERIFIED
 
-timeout: "1800s"
+timeout: "1200s"
