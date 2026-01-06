@@ -35,9 +35,8 @@ steps:
     id: 'push-frontend'
     waitFor: ['build-frontend']
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA']
-
-  # 4. Deployment (Wait for both pushes to finish)
  
+# 4. Deployment (Wait for both pushes to finish)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy'
     waitFor: ['push-backend', 'push-frontend']
@@ -45,28 +44,26 @@ steps:
     args:
       - '-c'
       - |
-        # 1. Get the project number and define the OS Login user
-        export PRJ_NUM=$(gcloud projects describe $PROJECT_ID --format='get(projectNumber)')
-        export OS_USER="sa_$$PRJ_NUM"
+        # Define VM details
         export VM_NAME="student-vm-private-1"
         export VM_ZONE="asia-south1-a"
+        export APP_DIR="/home/sa_$(gcloud iam service-accounts describe id-service-account-for-cloudbu@$PROJECT_ID.iam.gserviceaccount.com --format='get(uniqueId)')/app"
 
-        echo "Connecting as: $$OS_USER"
-
-        # 2. Pre-create the directory (this also initializes the OS Login profile)
+        # 1. Create directory using the auto-detected OS Login path
+        # We use a single SSH connection to do everything for speed
         gcloud compute ssh $$VM_NAME \
           --zone=$$VM_ZONE --tunnel-through-iap --quiet \
-          --command="mkdir -p /home/$$OS_USER/app"
+          --command="mkdir -p ~/app"
 
-        # 3. Copy the docker-compose file
-        gcloud compute scp docker-compose.yml $$OS_USER@$$VM_NAME:/home/$$OS_USER/app/docker-compose.yml \
+        # 2. Copy the docker-compose file (using ~ to target the home folder)
+        gcloud compute scp docker-compose.yml $$VM_NAME:~/app/docker-compose.yml \
           --zone=$$VM_ZONE --tunnel-through-iap --quiet
 
-        # 4. Run the deployment commands
+        # 3. Final Deploy
         gcloud compute ssh $$VM_NAME \
           --zone=$$VM_ZONE --tunnel-through-iap --quiet \
           --command="sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
-                     cd /home/$$OS_USER/app && \
+                     cd ~/app && \
                      export TAG=$SHORT_SHA && \
                      sudo docker compose pull && \
                      sudo docker compose up -d"
