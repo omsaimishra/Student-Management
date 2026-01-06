@@ -1,20 +1,21 @@
-version: "3.8"
-
 services:
   backend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:dev
+    # Use the TAG variable passed from Cloud Build
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:${TAG:-latest}
     restart: always
     ports:
       - "5000:5000"
 
   frontend:
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:dev
+    # Use the TAG variable passed from Cloud Build
+    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:${TAG:-latest}
     restart: always
     ports:
       - "80:80"
 
   mysql:
-    image: mysql:8
+    # Switched to 'minimal' to reduce download size and speed up the 'Pulling' phase
+    image: mysql:8.0-minimal
     restart: always
     volumes:
       - mysql-data:/var/lib/mysql
