@@ -37,22 +37,36 @@ steps:
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA']
 
   # 4. Deployment (Wait for both pushes to finish)
-  - name: 'gcr.io/cloud-builders/gcloud'
+ 
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy'
     waitFor: ['push-backend', 'push-frontend']
     entrypoint: bash
     args:
       - '-c'
       - |
-        # Consolidate SCP and SSH into minimum connections
-        gcloud compute scp docker-compose.yml om@student-vm-private-1:/home/om/app/docker-compose.yml \
-          --zone=asia-south1-a --tunnel-through-iap --quiet
+        # 1. Get the project number and define the OS Login user
+        export PRJ_NUM=$(gcloud projects describe $PROJECT_ID --format='get(projectNumber)')
+        export OS_USER="sa_$$PRJ_NUM"
+        export VM_NAME="student-vm-private-1"
+        export VM_ZONE="asia-south1-a"
 
-        gcloud compute ssh student-vm-private-1 \
-          --zone=asia-south1-a --tunnel-through-iap --quiet \
-          --command="mkdir -p /home/om/app && \
-                     sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
-                     cd /home/om/app && \
+        echo "Connecting as: $$OS_USER"
+
+        # 2. Pre-create the directory (this also initializes the OS Login profile)
+        gcloud compute ssh $$VM_NAME \
+          --zone=$$VM_ZONE --tunnel-through-iap --quiet \
+          --command="mkdir -p /home/$$OS_USER/app"
+
+        # 3. Copy the docker-compose file
+        gcloud compute scp docker-compose.yml $$OS_USER@$$VM_NAME:/home/$$OS_USER/app/docker-compose.yml \
+          --zone=$$VM_ZONE --tunnel-through-iap --quiet
+
+        # 4. Run the deployment commands
+        gcloud compute ssh $$VM_NAME \
+          --zone=$$VM_ZONE --tunnel-through-iap --quiet \
+          --command="sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
+                     cd /home/$$OS_USER/app && \
                      export TAG=$SHORT_SHA && \
                      sudo docker compose pull && \
                      sudo docker compose up -d"
