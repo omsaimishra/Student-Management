@@ -1,76 +1,44 @@
 steps:
-  # 1. Build & Push Backend (Runs in parallel)
+  # 1. Build Backend
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-backend'
     args:
-      - 'build'
-      - '-t'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA'
-      - '--cache-from'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest'
-      - './backend'
+      - build
+      - -t
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest
+      - ./backend
 
-  # 2. Build & Push Frontend (Runs in parallel)
+  # 2. Build Frontend
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-frontend'
     args:
-      - 'build'
-      - '-t'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA'
-      - '--cache-from'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest'
-      - './frontend'
+      - build
+      - -t
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest
+      - ./frontend
 
-  # 3. Push images in parallel
+  # 3. Push Backend
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-backend'
     waitFor: ['build-backend']
-    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA']
+    args:
+      - push
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest
 
+  # 4. Push Frontend
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-frontend'
     waitFor: ['build-frontend']
-    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA']
- 
-# 4. Deployment (Wait for both pushes to finish)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy'
-    waitFor: ['push-backend', 'push-frontend']
-    entrypoint: bash
     args:
-      - '-c'
-      - |
-        # Define VM details
-        export VM_NAME="student-vm-private-1"
-        export VM_ZONE="asia-south1-a"
-        export APP_DIR="/home/sa_$(gcloud iam service-accounts describe id-service-account-for-cloudbu@$PROJECT_ID.iam.gserviceaccount.com --format='get(uniqueId)')/app"
-
-        # 1. Create directory using the auto-detected OS Login path
-        # We use a single SSH connection to do everything for speed
-        gcloud compute ssh $$VM_NAME \
-          --zone=$$VM_ZONE --tunnel-through-iap --quiet \
-          --command="mkdir -p ~/app"
-
-        # 2. Copy the docker-compose file (using ~ to target the home folder)
-        gcloud compute scp docker-compose.yml $$VM_NAME:~/app/docker-compose.yml \
-          --zone=$$VM_ZONE --tunnel-through-iap --quiet
-
-        # 3. Final Deploy
-        gcloud compute ssh $$VM_NAME \
-          --zone=$$VM_ZONE --tunnel-through-iap --quiet \
-          --command="sudo gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet && \
-                     cd ~/app && \
-                     export TAG=$SHORT_SHA && \
-                     sudo docker compose pull && \
-                     sudo docker compose up -d"
+      - push
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest
 
 images:
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:$SHORT_SHA'
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:$SHORT_SHA'
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  # This allows steps with no 'waitFor' to run immediately in parallel
-  requestedVerifyOption: VERIFIED
 
 timeout: "1200s"
+
