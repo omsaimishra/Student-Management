@@ -1,8 +1,4 @@
 steps:
-  - name: 'python:3.9-slim'
-    id: 'install-deps'
-    entrypoint: pip
-    args: ['install', 'numpy']
   # 1. Build & Push Backend (Runs in parallel)
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-backend'
