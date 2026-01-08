@@ -15,7 +15,7 @@ services:
 
   mysql:
     # Switched to 'minimal' to reduce download size and speed up the 'Pulling' phase
-    image: mysql:8.0-minimal
+    image: image: mysql:8.0
     restart: always
     volumes:
       - mysql-data:/var/lib/mysql
