@@ -32,19 +32,18 @@ steps:
     args:
       - push
       - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/frontend:latest
+
   # 5. Trigger VM Deployment (Metadata Update)
-  - name: 'gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud'
     id: 'trigger-deploy'
     waitFor: ['push-backend', 'push-frontend']
+    entrypoint: bash
     args:
-      - 'compute'
-      - 'instances'
-      - 'add-metadata'
-      - 'student-vm-private-1'      # Replace with your VM name
-      - '--metadata'
-      - 'deploy_id=$BUILD_ID'
-      - '--zone'
-      - 'asia-south1-a'     # Replace with your VM zone
+      - -c
+      - |
+        gcloud compute instances add-metadata student-vm-private-1 \
+          --zone asia-south1-a \
+          --metadata deploy_id=$BUILD_ID
 
 images:
   - asia-south1-docker.pkg.dev/$PROJECT_ID/studentartifact/backend:latest
@@ -54,4 +53,5 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 timeout: "1200s"
+
 
