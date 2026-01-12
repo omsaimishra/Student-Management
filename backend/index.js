@@ -14,7 +14,7 @@ app.use(express.json());
 const mysql = require("mysql2/promise");
 
 const db = mysql.createPool({
-  host: "localhost",        // or mysql container name if using docker-compose
+  host: "mysql",        // or mysql container name if using docker-compose
   user: "student",
   password: "studentpass",
   database: "studentdb"
