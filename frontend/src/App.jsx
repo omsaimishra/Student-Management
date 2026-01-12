@@ -67,7 +67,7 @@ const searchStudent = async () => {
 
   return (
     <div className="page">
-      <h1>Student Managementsssssssssss</h1>
+      <h1>Student Management</h1>
       <p className="subtitle">Demo Application</p>
 
       <div className="grid">
