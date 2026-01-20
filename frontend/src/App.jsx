@@ -89,7 +89,7 @@ const searchStudent = async () => {
             placeholder="Enter roll number"
           />
 
-          <button onClick={addStudent}>Add Student</button>
+          <button onClick={addStudent}>Add Student                     </button>
         </div>
 
         {/* 🔍 Search Student */}
