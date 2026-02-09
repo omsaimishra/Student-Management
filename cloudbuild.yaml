@@ -5,7 +5,7 @@ steps:
     args:
       - build
       - -t
-      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:v1.3.9
       - ./backend
 
   # 2. Build Frontend
@@ -14,7 +14,7 @@ steps:
     args:
       - build
       - -t
-      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:v1.3.9
       - ./frontend
 
   # 3. Push Backend
@@ -23,7 +23,7 @@ steps:
     waitFor: ['build-backend']
     args:
       - push
-      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:v1.3.9
 
   # 4. Push Frontend
   - name: 'gcr.io/cloud-builders/docker'
@@ -31,7 +31,7 @@ steps:
     waitFor: ['build-frontend']
     args:
       - push
-      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:$SHORT_SHA
+      - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:v1.3.9
 
   # 5. Trigger VM Deployment (Metadata Update)
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -46,8 +46,8 @@ steps:
           --metadata deploy_id=$BUILD_ID
 
 images:
-  - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:$SHORT_SHA
-  - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:$SHORT_SHA
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/backend:v1.3.9
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/meanrev-student-demo-prod/frontend:v1.3.9
 
 options:
   logging: CLOUD_LOGGING_ONLY
