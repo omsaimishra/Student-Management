@@ -41,7 +41,7 @@ steps:
     args:
       - -c
       - |
-        gcloud compute instances add-metadata student-vm-private \
+        gcloud compute instances add-metadata student-vm-private-1 \
           --zone asia-south1-a \
           --metadata deploy_id=$BUILD_ID
 
