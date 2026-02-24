@@ -3,7 +3,8 @@ version: 0.2
 env:
   variables:
     AWS_REGION: ap-south-1
-    IMAGE_REPO_NAME: meanrev-student-demo-prod
+    IMAGE_REPO_NAME: student-app
+    IMAGE_TAG: v1   # 👈 change this for new release
 
 phases:
   pre_build:
@@ -12,23 +13,34 @@ phases:
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
 
+      - echo "ECR URI: $REPOSITORY_URI"
+
       - aws ecr get-login-password --region $AWS_REGION \
         | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Building frontend..."
-      - docker build -t frontend ./frontend
-      - docker tag frontend:latest $REPOSITORY_URI:frontend
+      - echo "Build started on $(date)"
 
-      - echo "Building backend..."
-      - docker build -t backend ./backend
-      - docker tag backend:latest $REPOSITORY_URI:backend
+      # Build frontend directly with final tag
+      - echo "Building frontend image..."
+      - docker build -t $REPOSITORY_URI:frontend-$IMAGE_TAG ./frontend
+
+      # Build backend directly with final tag
+      - echo "Building backend image..."
+      - docker build -t $REPOSITORY_URI:backend-$IMAGE_TAG ./backend
 
   post_build:
     commands:
-      - echo "Pushing frontend..."
-      - docker push $REPOSITORY_URI:frontend
+      - echo "Pushing images to ECR..."
 
-      - echo "Pushing backend..."
-      - docker push $REPOSITORY_URI:backend
+      - docker push $REPOSITORY_URI:frontend-$IMAGE_TAG
+      - docker push $REPOSITORY_URI:backend-$IMAGE_TAG
+
+      - echo "Build completed successfully"
+
+artifacts:
+  files:
+    - appspec.yml
+    - scripts/**/*
+    - docker-compose.yml
