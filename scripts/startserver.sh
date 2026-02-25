@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "Starting application using docker-compose..."
+cd /opt/codedeploy-agent/deployment-root/*/*/deployment-archive
 
+echo "Starting application..."
 docker compose up -d
 
 docker ps
