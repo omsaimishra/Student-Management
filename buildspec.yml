@@ -10,14 +10,15 @@ phases:
   pre_build:
     commands:
       - echo "Logging into ECR..."
-      - export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - export REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
       - echo "ECR URI: $REPOSITORY_URI"
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Build started on $(date)"
+      - echo "Build started"
+      - date
       - echo "Building frontend image..."
       - docker build -t $REPOSITORY_URI:frontend-$IMAGE_TAG ./frontend
       - echo "Building backend image..."
