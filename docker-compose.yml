@@ -2,14 +2,14 @@ version: "3.8"
 
 services:
   backend:
-    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:backend-latest
+    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:backend-v1
     container_name: backend
     ports:
       - "5000:5000"
     restart: always
 
   frontend:
-    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:frontend-latest
+    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:frontend-v1
     container_name: frontend
     ports:
       - "80:80"
