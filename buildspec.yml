@@ -4,35 +4,39 @@ env:
   variables:
     AWS_REGION: ap-south-1
     IMAGE_REPO_NAME: meanrev-student-demo-prod
-    IMAGE_TAG: v1
 
 phases:
   pre_build:
     commands:
-      - echo "Logging into ECR..."
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
-      - echo "ECR URI: $REPOSITORY_URI"
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - "echo Logging into ECR..."
+      - "ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)"
+      - "REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME"
+      - "echo ECR URI: $REPOSITORY_URI"
+      - "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+      - "IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)"
+      - "echo Using IMAGE_TAG=$IMAGE_TAG"
 
   build:
     commands:
-      - echo "Build started"
-      - date
-      - echo "Building frontend image..."
-      - docker build -t $REPOSITORY_URI:frontend-$IMAGE_TAG ./frontend
-      - echo "Building backend image..."
-      - docker build -t $REPOSITORY_URI:backend-$IMAGE_TAG ./backend
+      - "echo Build started"
+      - "date"
+      - "echo Building frontend image..."
+      - "docker build -t $REPOSITORY_URI:frontend-$IMAGE_TAG ./frontend"
+      - "echo Building backend image..."
+      - "docker build -t $REPOSITORY_URI:backend-$IMAGE_TAG ./backend"
 
   post_build:
     commands:
-      - echo "Pushing images to ECR..."
-      - docker push $REPOSITORY_URI:frontend-$IMAGE_TAG
-      - docker push $REPOSITORY_URI:backend-$IMAGE_TAG
-      - echo "Build completed successfully"
+      - "echo Pushing images to ECR..."
+      - "docker push $REPOSITORY_URI:frontend-$IMAGE_TAG"
+      - "docker push $REPOSITORY_URI:backend-$IMAGE_TAG"
+      - "echo Writing image definitions file..."
+      - "printf '[{\"name\":\"frontend\",\"imageUri\":\"%s\"},{\"name\":\"backend\",\"imageUri\":\"%s\"}]' $REPOSITORY_URI:frontend-$IMAGE_TAG $REPOSITORY_URI:backend-$IMAGE_TAG > imagedefinitions.json"
+      - "echo Build completed successfully"
 
 artifacts:
   files:
     - appspec.yml
-    - scripts/**/*
     - docker-compose.yml
+    - imagedefinitions.json
+    - scripts/**/*
