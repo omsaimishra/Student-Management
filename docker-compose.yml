@@ -1,27 +1,18 @@
+version: "3.8"
+
 services:
   backend:
-    # Use the TAG variable passed from Cloud Build
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/backend:${TAG:-latest}
-    restart: always
+    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:backend-latest
+    container_name: backend
     ports:
       - "5000:5000"
+    restart: always
 
   frontend:
-    # Use the TAG variable passed from Cloud Build
-    image: asia-south1-docker.pkg.dev/student-management-demoapp/studentartifact/frontend:${TAG:-latest}
-    restart: always
+    image: 143262365667.dkr.ecr.ap-south-1.amazonaws.com/meanrev-student-demo-prod:frontend-latest
+    container_name: frontend
     ports:
       - "80:80"
-
-  mysql:
-    # Switched to 'minimal' to reduce download size and speed up the 'Pulling' phase
-    image: image: mysql:8.0
+    depends_on:
+      - backend
     restart: always
-    volumes:
-      - mysql-data:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: studentdb
-
-volumes:
-  mysql-data:
