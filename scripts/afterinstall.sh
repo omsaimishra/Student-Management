@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd /opt/codedeploy-agent/deployment-root/*/*/deployment-archive
+cd "$(dirname "$0")/.."
 
 AWS_REGION="ap-south-1"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
