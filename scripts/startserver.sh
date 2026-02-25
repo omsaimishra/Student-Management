@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd /opt/codedeploy-agent/deployment-root/*/*/deployment-archive
+cd "$(dirname "$0")/.."
 
 echo "Starting application..."
 docker compose up -d
