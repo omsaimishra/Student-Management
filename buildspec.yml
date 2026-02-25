@@ -3,8 +3,8 @@ version: 0.2
 env:
   variables:
     AWS_REGION: ap-south-1
-    IMAGE_REPO_NAME: student-app
-    IMAGE_TAG: v1   # 👈 change this for new release
+    IMAGE_REPO_NAME: meanrev-student-demo-prod
+    IMAGE_TAG: v1   #change this for new release
 
 phases:
   pre_build:
