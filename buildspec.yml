@@ -4,6 +4,7 @@ env:
   variables:
     AWS_REGION: ap-south-1
     IMAGE_REPO_NAME: meanrev-student-demo-prod
+    IMAGE_TAG: v1   # ✅ fixed tag
 
 phases:
   pre_build:
@@ -13,7 +14,6 @@ phases:
       - "REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME"
       - "echo ECR URI: $REPOSITORY_URI"
       - "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
-      - "IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)"
       - "echo Using IMAGE_TAG=$IMAGE_TAG"
 
   build:
