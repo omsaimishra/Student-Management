@@ -16,3 +16,18 @@ services:
     depends_on:
       - backend
     restart: always
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    volumes:
+      - app_mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: studentpass
+      MYSQL_DATABASE: studentdb
+      MYSQL_USER: student
+      MYSQL_PASSWORD: studentpass
+
+volumes:
+  app_mysql-data:
