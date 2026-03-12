@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     AWS_REGION: ap-south-1
-    IMAGE_REPO_NAME: meanrev-student-demo-prod
+    IMAGE_REPO_NAME: dev-student-demo-repo
     IMAGE_TAG: v1   # ✅ fixed tag
 
 phases:
